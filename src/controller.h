@@ -47,6 +47,8 @@ class Controller {
     CommandQueue cmd_queue_;
     Refresh refresh_;
 
+    bool drain_full_and_block = false;
+
 #ifdef THERMAL
     ThermalCalculator &thermal_calc_;
 #endif  // THERMAL

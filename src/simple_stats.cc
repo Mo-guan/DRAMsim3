@@ -459,6 +459,7 @@ void SimpleStats::UpdateFinalStats() {
         counters_["num_reads_done"] + counters_["num_writes_done"];
     double total_time = counters_["num_cycles"] * config_.tCK;
     double avg_bw = total_reqs * config_.request_size_bytes / total_time;
+    printf("total_reqs: %lu, total_time: %f, avg_bw: %f\n", total_reqs, total_time, avg_bw);
     calculated_["average_bandwidth"] = avg_bw;
 
     double total_energy = doubles_["act_energy"] + doubles_["read_energy"] +

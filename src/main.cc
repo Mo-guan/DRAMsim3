@@ -15,6 +15,13 @@ int main(int argc, const char **argv) {
     args::ValueFlag<uint64_t> num_cycles_arg(parser, "num_cycles",
                                              "Number of cycles to simulate",
                                              {'c', "cycles"}, 100000);
+    args::ValueFlag<int> cpu_clk_arg(parser, "cpu_clk_ratio",
+                                     "ratio of cpu clock to dram clock",
+                                     {"ccr", "cpu_clk_ratio"}, 15);
+    args::ValueFlag<int> mem_clk_arg(parser, "mem_clk_ratio",
+                                     "ratio of mem clock to dram clock",
+                                     {"mcr", "mem_clk_ratio"}, 10);
+
     args::ValueFlag<std::string> output_dir_arg(
         parser, "output_dir", "Output directory for stats files",
         {'o', "output-dir"}, ".");
@@ -46,24 +53,31 @@ int main(int argc, const char **argv) {
     }
 
     uint64_t cycles = args::get(num_cycles_arg);
+    int cpu_clk_ratio = args::get(cpu_clk_arg);
+    int mem_clk_ratio = args::get(mem_clk_arg);
     std::string output_dir = args::get(output_dir_arg);
     std::string trace_file = args::get(trace_file_arg);
     std::string stream_type = args::get(stream_arg);
 
     CPU *cpu;
     if (!trace_file.empty()) {
-        cpu = new TraceBasedCPU(config_file, output_dir, trace_file);
+        cpu = new RamSimCPU(config_file, output_dir, trace_file, cpu_clk_ratio,
+                            mem_clk_ratio);
+        while (!cpu->finished()) {
+            cpu->ClockTick();
+        }
     } else {
         if (stream_type == "stream" || stream_type == "s") {
             cpu = new StreamCPU(config_file, output_dir);
         } else {
             cpu = new RandomCPU(config_file, output_dir);
         }
+
+        for (uint64_t clk = 0; clk < cycles; clk++) {
+            cpu->ClockTick();
+        }
     }
 
-    for (uint64_t clk = 0; clk < cycles; clk++) {
-        cpu->ClockTick();
-    }
     cpu->PrintStats();
 
     delete cpu;

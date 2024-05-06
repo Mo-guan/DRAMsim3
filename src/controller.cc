@@ -205,8 +205,11 @@ void Controller::ScheduleTransaction() {
     }
 
     std::vector<Transaction> &queue =
-        is_unified_queue_ ? unified_queue_
-                          : write_draining_ > 0 ? write_buffer_ : read_queue_;
+        is_unified_queue_                              ? unified_queue_
+        : write_draining_ > 0 && !drain_full_and_block ? write_buffer_
+                                                       : read_queue_;
+    bool is_write_buffer =
+        !is_unified_queue_ && write_draining_ > 0 && !drain_full_and_block;
     for (auto it = queue.begin(); it != queue.end(); it++) {
         auto cmd = TransToCommand(*it);
         if (cmd_queue_.WillAcceptCommand(cmd.Rank(), cmd.Bankgroup(),
@@ -223,6 +226,12 @@ void Controller::ScheduleTransaction() {
             queue.erase(it);
             break;
         }
+    }
+    if (is_write_buffer && write_buffer_.size() == write_buffer_.capacity()) {
+        drain_full_and_block = true;
+        ScheduleTransaction();
+    } else {
+        drain_full_and_block = false;
     }
 }
 

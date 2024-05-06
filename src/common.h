@@ -125,5 +125,18 @@ struct Transaction {
     friend std::istream& operator>>(std::istream& is, Transaction& trans);
 };
 
+struct MemReq {
+    uint64_t id;
+    uint64_t addr;
+    int type;
+    uint32_t delay;
+    uint32_t size;
+    std::vector<uint64_t> deps;
+
+    int min_issue_cycle;
+
+    std::vector<uint64_t> ids;
+};
+
 }  // namespace dramsim3
 #endif
